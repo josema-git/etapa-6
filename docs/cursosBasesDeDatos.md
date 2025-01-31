@@ -142,11 +142,20 @@
   - Cumplir con 2FN.
   - No debe haber dependencias funcionales transitivas entre atributos no clave.
 
+### Boyce Codd Forma normal (BCFN)
+ - **Objetivo:** Eliminar datos multivaluados repetidos.
+- **Requisitos:**
+  - Cumplir con 3FN.
+  - Identificar campos multivaluados con una clave única.
+
+
 ### Cuarta Forma Normal (4FN)
 - **Objetivo:** Eliminar datos multivaluados repetidos.
 - **Requisitos:**
   - Cumplir con 3FN.
   - Identificar campos multivaluados con una clave única.
+
+
 
 ---
 
