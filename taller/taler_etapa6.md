@@ -57,7 +57,7 @@ COMMIT;
 
 ## Lab 2: Query Optimization Lab
 
-### 1. Find Customers Without Orders
+### 1. Find all the customers who have never placed an order.
 ```sql
 SELECT 
     customers.customer_id id,
@@ -69,7 +69,7 @@ LEFT JOIN orders
 where order_id IS NULL;
 ```
 
-### 2. Country with Most Customers
+### 2. Which country has the highest number of customers?
 ```sql
 SELECT 
     country, 
@@ -80,7 +80,7 @@ ORDER BY amount_customers DESC
 LIMIT 1;
 ```
 
-### 3. Products with High Orders but Not Recent
+### 3. List products that have been ordered more than 6500 times in total but haven't been ordered since 2023-09-10
 ```sql
 SELECT 
     products.product_id AS id, 
@@ -99,7 +99,7 @@ HAVING
     AND SUM(orderdetails.quantity_ordered) > 6500;
 ```
 
-### 4. Top Customers by Product
+### 4. For a given product, identify customers who have ordered that product the most.
 ```sql
 SELECT 
     products.product_id AS id,
@@ -119,7 +119,7 @@ ORDER BY amount_orders DESC
 LIMIT 10;
 ```
 
-### 5. Month with Highest Sales
+### 5. Find the month with the highest sales.
 ```sql
 SELECT 
     EXTRACT(MONTH FROM order_date) AS month,
@@ -134,7 +134,7 @@ ORDER BY total_sales DESC
 LIMIT 1;
 ```
 
-### 6. Most Popular Tag by Purchase Quantity
+### 6. Which tag has had the highest quantity of product purchases by customers with that tag
 ```sql
 SELECT 
     tags.tag_id AS id,
@@ -154,7 +154,7 @@ ORDER BY total_purchases DESC
 LIMIT 1;
 ```
 
-### 7. Products Purchased by Both Ashley and Karen
+### 7. Which products have both "Ashley" and "Karen"?
 ```sql
 SELECT DISTINCT
     products.product_id AS id, 
@@ -175,7 +175,7 @@ GROUP BY products.product_id, products.product_name
 HAVING COUNT(DISTINCT tags.tag_id) = 2;
 ```
 
-### 8. Products Purchased by Ashley Tag (Optimized)
+### 8. Find products that have been purchased at least once by a customer with the “Ashley” tag (must complete in under 500ms)
 
 ```sql
 CREATE INDEX idx_tags_tag_name ON tags(tag_name);
