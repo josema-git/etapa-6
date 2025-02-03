@@ -1,5 +1,8 @@
--- lab 1 tx-lab
+# SQL Lab Exercises
 
+## Lab 1: Transaction Lab
+
+```sql
 BEGIN;
 DO $$
 DECLARE
@@ -50,11 +53,12 @@ BEGIN
             RAISE NOTICE 'Error: %', SQLERRM;
 END $$;
 COMMIT;
+```
 
--- lab 2 opt-lab
+## Lab 2: Query Optimization Lab
 
-
--- 1. Find all the customers who have never placed an order.
+### 1. Find Customers Without Orders
+```sql
 SELECT 
     customers.customer_id id,
     customers.name, 
@@ -63,8 +67,10 @@ FROM customers
 LEFT JOIN orders 
     ON customers.customer_id = orders.customer_id
 where order_id IS NULL;
+```
 
--- 2. Which country has the highest number of customers?
+### 2. Country with Most Customers
+```sql
 SELECT 
     country, 
     count(*) as amount_customers
@@ -72,15 +78,16 @@ FROM customers
 GROUP BY country
 ORDER BY amount_customers DESC
 LIMIT 1;
+```
 
--- 3. List products that have been ordered more than 6500 times in total but haven't been ordered since 2023-09-10
+### 3. Products with High Orders but Not Recent
+```sql
 SELECT 
     products.product_id AS id, 
     products.product_name AS product, 
     SUM(orderdetails.quantity_ordered) AS amount_orders, 
     MAX(orders.order_date) AS last_order
-FROM 
-    products
+FROM products
 JOIN orderdetails 
     ON products.product_id = orderdetails.product_id
 JOIN orders 
@@ -90,8 +97,10 @@ GROUP BY
 HAVING 
     MAX(orders.order_date) < '2023-09-10' 
     AND SUM(orderdetails.quantity_ordered) > 6500;
+```
 
--- 4. For a given product, identify customers who have ordered that product the most.
+### 4. Top Customers by Product
+```sql
 SELECT 
     products.product_id AS id,
     products.product_name AS product,
@@ -105,11 +114,13 @@ JOIN orders
 JOIN customers 
     ON orders.customer_id = customers.customer_id
 WHERE products.product_id = 201294
-GROUP BY products.product_id ,products.product_name, customers.name
+GROUP BY products.product_id, products.product_name, customers.name
 ORDER BY amount_orders DESC
 LIMIT 10;
+```
 
--- 5. Find the month with the highest sales.
+### 5. Month with Highest Sales
+```sql
 SELECT 
     EXTRACT(MONTH FROM order_date) AS month,
     SUM(orderdetails.quantity_ordered * products.price) AS total_sales
@@ -121,12 +132,14 @@ JOIN products
 GROUP BY EXTRACT(MONTH FROM order_date)
 ORDER BY total_sales DESC
 LIMIT 1;
+```
 
--- 6. Which tag has had the highest quantity of product purchases by customers with that tag
+### 6. Most Popular Tag by Purchase Quantity
+```sql
 SELECT 
-tags.tag_id AS id,
-tags.tag_name AS tag, 
-sum(orderdetails.quantity_ordered) AS total_purchases
+    tags.tag_id AS id,
+    tags.tag_name AS tag, 
+    sum(orderdetails.quantity_ordered) AS total_purchases
 FROM tags
 JOIN customertags
     ON tags.tag_id = customertags.tag_id
@@ -136,12 +149,13 @@ JOIN orders
     ON customers.customer_id = orders.customer_id
 JOIN orderdetails
     ON orders.order_id = orderdetails.order_id
-GROUP BY tags.tag_id ,tags.tag_name
+GROUP BY tags.tag_id, tags.tag_name
 ORDER BY total_purchases DESC
 LIMIT 1;
+```
 
--- 7. Which products have both "Ashley" and "Karen"?
-
+### 7. Products Purchased by Both Ashley and Karen
+```sql
 SELECT DISTINCT
     products.product_id AS id, 
     products.product_name AS product
@@ -159,11 +173,11 @@ JOIN tags
 WHERE tags.tag_name IN ('Ashley', 'Karen')
 GROUP BY products.product_id, products.product_name
 HAVING COUNT(DISTINCT tags.tag_id) = 2;
+```
 
+### 8. Products Purchased by Ashley Tag (Optimized)
 
-
--- 8. Find products that have been purchased at least once by a customer with the “Ashley” tag (must complete in under 500ms)
-
+```sql
 CREATE INDEX idx_tags_tag_name ON tags(tag_name);
 CREATE INDEX idx_customertags_tag_id ON customertags(tag_id);
 CREATE INDEX idx_customertags_customer_id ON customertags(customer_id);
@@ -187,3 +201,4 @@ JOIN customertags
 JOIN tags
     ON customertags.tag_id = tags.tag_id
 WHERE tags.tag_name = 'Ashley';
+```
