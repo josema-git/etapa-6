@@ -2,6 +2,9 @@
 
 ## Lab 1: Transaction Lab
 
+#### This code first starts a transaction, then declares the necessary variables for the transaction. After that, it makes verifications about transaction consistency with exceptions, and finally updates and commits.
+
+#### code:
 ```sql
 BEGIN;
 DO $$
@@ -55,9 +58,20 @@ END $$;
 COMMIT;
 ```
 
-## Lab 2: Query Optimization Lab
+#### Before
+
+![alt text](tx_lab_1.png)
+
+#### after
+
+![alt text](tx_lab_2.png)
+
+## Lab 2: Optimization Lab
 
 ### 1. Find all the customers who have never placed an order.
+
+#### Select customers who have no orders (not order whit that customer_id)
+
 ```sql
 SELECT 
     customers.customer_id id,
@@ -69,7 +83,13 @@ LEFT JOIN orders
 where order_id IS NULL;
 ```
 
+![alt text](opt_lab_1.png)
+
+
 ### 2. Which country has the highest number of customers?
+
+#### Uses a count(*) to determine the number of customers for each country by grouping them
+
 ```sql
 SELECT 
     country, 
@@ -80,7 +100,12 @@ ORDER BY amount_customers DESC
 LIMIT 1;
 ```
 
+![alt text](opt_lab_2.png)
+
 ### 3. List products that have been ordered more than 6500 times in total but haven't been ordered since 2023-09-10
+
+#### Join products, orderdetails, and orders; then, group them by products and filter by order date and quantity ordered
+
 ```sql
 SELECT 
     products.product_id AS id, 
@@ -99,7 +124,12 @@ HAVING
     AND SUM(orderdetails.quantity_ordered) > 6500;
 ```
 
+![alt text](opt_lab_3.png)
+
 ### 4. For a given product, identify customers who have ordered that product the most.
+
+#### Join products, orderdetails, orders, and customers, select a given product, group by product and customer, and get the top 10 rank
+
 ```sql
 SELECT 
     products.product_id AS id,
@@ -119,7 +149,12 @@ ORDER BY amount_orders DESC
 LIMIT 10;
 ```
 
+![alt text](opt_lab_4.png)
+
 ### 5. Find the month with the highest sales.
+
+#### Join products, orderdetails, and orders; then, group them by month and calculate the total sales for each month. Finally, order the results by total sales in descending order and limit the result to the top 1.
+
 ```sql
 SELECT 
     EXTRACT(MONTH FROM order_date) AS month,
@@ -134,7 +169,12 @@ ORDER BY total_sales DESC
 LIMIT 1;
 ```
 
+![alt text](opt_lab_5.png)
+
 ### 6. Which tag has had the highest quantity of product purchases by customers with that tag
+
+#### Join tags, customertags, customers, orders, and orderdetails; then, group them by tag and calculate the total quantity of product purchases for each tag. Finally, order the results by total purchases in descending order and limit the result to the top 1.
+
 ```sql
 SELECT 
     tags.tag_id AS id,
@@ -154,7 +194,12 @@ ORDER BY total_purchases DESC
 LIMIT 1;
 ```
 
+![alt text](opt_lab_6.png)
+
 ### 7. Which products have both "Ashley" and "Karen"?
+
+#### Join products, orderdetails, orders, customers, customertags, and tags; then, filter by tags "Ashley" and "Karen". Group by product and ensure both tags are present.
+
 ```sql
 SELECT DISTINCT
     products.product_id AS id, 
@@ -175,15 +220,18 @@ GROUP BY products.product_id, products.product_name
 HAVING COUNT(DISTINCT tags.tag_id) = 2;
 ```
 
+![alt text](opt_lab_7.png)
+
 ### 8. Find products that have been purchased at least once by a customer with the “Ashley” tag (must complete in under 500ms)
 
+#### Create indexes to optimize the query and ensure it completes in under 500ms. Then, join products, orderdetails, orders, customers, customertags, and tags; filter by the "Ashley" tag
+
 ```sql
-CREATE INDEX idx_tags_tag_name ON tags(tag_name);
-CREATE INDEX idx_customertags_tag_id ON customertags(tag_id);
-CREATE INDEX idx_customertags_customer_id ON customertags(customer_id);
-CREATE INDEX idx_orders_customer_id ON orders(customer_id);
-CREATE INDEX idx_orderdetails_order_id ON orderdetails(order_id);
-CREATE INDEX idx_orderdetails_product_id ON orderdetails(product_id);
+CREATE INDEX IF NOT EXISTS idx_customertags_tag_id ON customertags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_customertags_customer_id ON customertags(customer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_orderdetails_order_id ON orderdetails(order_id);
+CREATE INDEX IF NOT EXISTS idx_orderdetails_product_id ON orderdetails(product_id);
 
 EXPLAIN ANALYZE
 SELECT DISTINCT
@@ -202,3 +250,4 @@ JOIN tags
     ON customertags.tag_id = tags.tag_id
 WHERE tags.tag_name = 'Ashley';
 ```
+![alt text](opt_lab_8.png)
