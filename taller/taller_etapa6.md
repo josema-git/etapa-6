@@ -251,3 +251,5 @@ JOIN tags
 WHERE tags.tag_name = 'Ashley';
 ```
 ![alt text](opt_lab_8.png)
+
+
