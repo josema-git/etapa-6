@@ -6,17 +6,18 @@
 
 #### code:
 ```sql
-BEGIN;
 DO $$
 DECLARE
-    sender_email VARCHAR := 'craig.williams@hmail.com';
-    receiver_email VARCHAR := 'bill.johnson@fmail.com';
+    sender_email VARCHAR := 'bill.johnson@fmail.com';
+    receiver_email VARCHAR := 'craig.williams@hmail.com';
     transfer_amount INTEGER := 100;
 
     sender_id INTEGER;
     receiver_id INTEGER;
     sender_balance INTEGER;
+
 BEGIN
+
     SELECT id INTO sender_id
     FROM "user"
     WHERE email = sender_email;
@@ -35,27 +36,27 @@ BEGIN
 
     SELECT balance INTO sender_balance
     FROM "account"
-    WHERE user_id = sender_id;
+    WHERE user_id = sender_id
+    FOR UPDATE;
 
     IF sender_balance < transfer_amount THEN
         RAISE EXCEPTION 'Insufficient funds';
     END IF;
 
     UPDATE "account"
-    SET balance = balance - transfer_amount
-    WHERE user_id = sender_id;
-
-    PERFORM pg_sleep(7);
-
-    UPDATE "account"
-    SET balance = balance + transfer_amount
-    WHERE user_id = receiver_id;
+    SET balance = 
+        CASE 
+            WHEN user_id = sender_id THEN balance - transfer_amount
+            WHEN user_id = receiver_id THEN balance + transfer_amount
+        END
+    WHERE user_id IN (sender_id, receiver_id);
 
     EXCEPTION
         WHEN OTHERS THEN
+            ROLLBACK;
             RAISE NOTICE 'Error: %', SQLERRM;
+    COMMIT;
 END $$;
-COMMIT;
 ```
 
 #### Before
