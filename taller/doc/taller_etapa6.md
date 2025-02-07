@@ -101,7 +101,6 @@ JOIN orders
 GROUP BY country
 ORDER BY amount_customers DESC
 LIMIT 1;
-
 ```
 
 ![alt text](opt_lab_2.png)
