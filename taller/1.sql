@@ -176,12 +176,9 @@ HAVING COUNT(DISTINCT tags.tag_id) = 2;
 
 -- 8. Find products that have been purchased at least once by a customer with the “Ashley” tag (must complete in under 500ms)
 
-CREATE INDEX IF NOT EXISTS idx_customertags_tag_id ON customertags(tag_id);
-CREATE INDEX IF NOT EXISTS idx_tags_tag_name ON tags(tag_name);
-CREATE INDEX IF NOT EXISTS idx_customertags_customer_id ON customertags(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orderdetails_order_id ON orderdetails(order_id);
-CREATE INDEX IF NOT EXISTS idx_orderdetails_product_id ON orderdetails(product_id);
+
 EXPLAIN ANALYZE
 SELECT
     products.product_name AS product

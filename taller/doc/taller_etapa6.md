@@ -235,12 +235,9 @@ HAVING COUNT(DISTINCT tags.tag_id) = 2;
 #### Create indexes to optimize the query and ensure it completes in under 500ms. Then, join products, orderdetails, orders, customers, customertags, and tags; filter by the "Ashley" tag
 
 ```sql
-CREATE INDEX IF NOT EXISTS idx_customertags_tag_id ON customertags(tag_id);
-CREATE INDEX IF NOT EXISTS idx_tags_tag_name ON tags(tag_name);
-CREATE INDEX IF NOT EXISTS idx_customertags_customer_id ON customertags(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orderdetails_order_id ON orderdetails(order_id);
-CREATE INDEX IF NOT EXISTS idx_orderdetails_product_id ON orderdetails(product_id);
+
 EXPLAIN ANALYZE
 SELECT
     products.product_name AS product
