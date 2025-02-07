@@ -67,20 +67,15 @@ where order_id IS NULL;
 
 
 -- 2. Which country has the highest number of customers?
-SELECT DISTINCT
+SELECT
     country,
-    count(*) as amount_customers
-FROM (
-    SELECT DISTINCT
-        customers.name,
-        customers.country
-    FROM customers
-    GROUP BY customers.customer_id, customers.name, customers.country
-) AS customers_country
+    count(DISTINCT customers.customer_id) as amount_customers
+FROM customers
+JOIN orders
+    ON customers.customer_id = orders.customer_id
 GROUP BY country
 ORDER BY amount_customers DESC
-LIMIT 1
-;
+LIMIT 1;
 
 -- 3. List products that have been ordered more than 6500 times in total but haven't been ordered since 2023-09-10
 SELECT 
@@ -123,26 +118,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 SELECT * FROM get_top_customer(201658);
-
-SELECT 
-    customers.name AS customer,
-    products.product_id AS id,
-    SUM(orderdetails.quantity_ordered) AS total_ordered
-From products
-JOIN orderdetails
-    ON products.product_id = orderdetails.product_id
-JOIN orders
-    ON orderdetails.order_id = orders.order_id
-JOIN customers
-    ON orders.customer_id = customers.customer_id
-WHERE products.product_id = 201658 AND customers.name = 'Hailey Wood'
-GROUP BY customers.name, Products.product_id, orderdetails.quantity_ordered
-ORDER BY orderdetails.quantity_ordered DESC;
 
 -- 5. Find the month with the highest sales.
 SELECT 
+    EXTRACT(YEAR FROM order_date) AS year,
     EXTRACT(MONTH FROM order_date) AS month,
     SUM(orderdetails.quantity_ordered * products.price) AS total_sales
 FROM orders
@@ -150,15 +130,15 @@ JOIN orderdetails
     ON orders.order_id = orderdetails.order_id
 JOIN products 
     ON orderdetails.product_id = products.product_id
-GROUP BY EXTRACT(MONTH FROM order_date)
+GROUP BY EXTRACT(YEAR FROM order_date), EXTRACT(MONTH FROM order_date)
 ORDER BY total_sales DESC
 LIMIT 1;
 
 -- 6. Which tag has had the highest quantity of product purchases by customers with that tag
 SELECT 
-tags.tag_id AS id,
-tags.tag_name AS tag, 
-sum(orderdetails.quantity_ordered) AS total_purchases
+    tags.tag_id AS id,
+    tags.tag_name AS tag, 
+    sum(orderdetails.quantity_ordered) AS total_purchases
 FROM tags
 JOIN customertags
     ON tags.tag_id = customertags.tag_id
@@ -168,7 +148,7 @@ JOIN orders
     ON customers.customer_id = orders.customer_id
 JOIN orderdetails
     ON orders.order_id = orderdetails.order_id
-GROUP BY tags.tag_id ,tags.tag_name
+GROUP BY tags.tag_id, tags.tag_name
 ORDER BY total_purchases DESC
 LIMIT 1;
 
@@ -203,7 +183,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orderdetails_order_id ON orderdetails(order_id);
 CREATE INDEX IF NOT EXISTS idx_orderdetails_product_id ON orderdetails(product_id);
 EXPLAIN ANALYZE
-SELECT DISTINCT
+SELECT
     products.product_name AS product
 FROM products
 JOIN orderdetails
@@ -216,4 +196,5 @@ JOIN customertags
     ON customers.customer_id = customertags.customer_id
 JOIN tags
     ON customertags.tag_id = tags.tag_id
-WHERE tags.tag_name = 'Ashley';
+WHERE tags.tag_name = 'Ashley'
+GROUP BY products.product_name;

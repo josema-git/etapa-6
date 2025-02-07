@@ -92,13 +92,16 @@ where order_id IS NULL;
 #### Uses a count(*) to determine the number of customers for each country by grouping them
 
 ```sql
-SELECT 
-    country, 
-    count(*) as amount_customers
+SELECT
+    country,
+    count(DISTINCT customers.customer_id) as amount_customers
 FROM customers
+JOIN orders
+    ON customers.customer_id = orders.customer_id
 GROUP BY country
 ORDER BY amount_customers DESC
 LIMIT 1;
+
 ```
 
 ![alt text](opt_lab_2.png)
@@ -113,41 +116,48 @@ SELECT
     products.product_name AS product, 
     SUM(orderdetails.quantity_ordered) AS amount_orders, 
     MAX(orders.order_date) AS last_order
-FROM products
+FROM 
+    products
 JOIN orderdetails 
     ON products.product_id = orderdetails.product_id
 JOIN orders 
     ON orderdetails.order_id = orders.order_id
 GROUP BY 
-    products.product_id
+    products.product_id, products.product_name
 HAVING 
-    MAX(orders.order_date) < '2023-09-10' 
-    AND SUM(orderdetails.quantity_ordered) > 6500;
+    SUM(orderdetails.quantity_ordered) > 6500
+    AND MAX(orders.order_date) <= '2023-09-10' ;
 ```
 
 ![alt text](opt_lab_3.png)
 
 ### 4. For a given product, identify customers who have ordered that product the most.
 
-#### Join products, orderdetails, orders, and customers, select a given product, group by product and customer, and get the top 10 rank
+#### Creates a function that joins: products, orderdetails, orders, and customers, after that select a given product, group by product and customer, and get the top 10 rank
 
 ```sql
-SELECT 
-    products.product_id AS id,
-    products.product_name AS product,
-    customers.name AS customer,
-    SUM(orderdetails.quantity_ordered) AS amount_orders
-FROM products
-JOIN orderdetails 
-    ON products.product_id = orderdetails.product_id
-JOIN orders 
-    ON orderdetails.order_id = orders.order_id
-JOIN customers 
-    ON orders.customer_id = customers.customer_id
-WHERE products.product_id = 201294
-GROUP BY products.product_id, products.product_name, customers.name
-ORDER BY amount_orders DESC
-LIMIT 10;
+CREATE OR REPLACE FUNCTION get_top_customer(p_product_id INTEGER)
+RETURNS TABLE(customer VARCHAR(255), total_ordered BIGINT) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        customers.name AS customer,
+        COALESCE(SUM(orderdetails.quantity_ordered), 0) AS total_ordered
+    FROM products
+    JOIN orderdetails
+        ON products.product_id = orderdetails.product_id
+    JOIN orders
+        ON orderdetails.order_id = orders.order_id
+    JOIN customers
+        ON orders.customer_id = customers.customer_id
+    WHERE products.product_id = p_product_id
+    GROUP BY customers.customer_id, customers.name
+    ORDER BY total_ordered DESC
+    LIMIT 1;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT * FROM get_top_customer(201658);
 ```
 
 ![alt text](opt_lab_4.png)
@@ -158,6 +168,7 @@ LIMIT 10;
 
 ```sql
 SELECT 
+    EXTRACT(YEAR FROM order_date) AS year,
     EXTRACT(MONTH FROM order_date) AS month,
     SUM(orderdetails.quantity_ordered * products.price) AS total_sales
 FROM orders
@@ -165,7 +176,7 @@ JOIN orderdetails
     ON orders.order_id = orderdetails.order_id
 JOIN products 
     ON orderdetails.product_id = products.product_id
-GROUP BY EXTRACT(MONTH FROM order_date)
+GROUP BY EXTRACT(YEAR FROM order_date), EXTRACT(MONTH FROM order_date)
 ORDER BY total_sales DESC
 LIMIT 1;
 ```
@@ -229,14 +240,13 @@ HAVING COUNT(DISTINCT tags.tag_id) = 2;
 
 ```sql
 CREATE INDEX IF NOT EXISTS idx_customertags_tag_id ON customertags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_tags_tag_name ON tags(tag_name);
 CREATE INDEX IF NOT EXISTS idx_customertags_customer_id ON customertags(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orderdetails_order_id ON orderdetails(order_id);
 CREATE INDEX IF NOT EXISTS idx_orderdetails_product_id ON orderdetails(product_id);
-
 EXPLAIN ANALYZE
-SELECT DISTINCT
-    products.product_id AS id,
+SELECT
     products.product_name AS product
 FROM products
 JOIN orderdetails
@@ -249,7 +259,8 @@ JOIN customertags
     ON customers.customer_id = customertags.customer_id
 JOIN tags
     ON customertags.tag_id = tags.tag_id
-WHERE tags.tag_name = 'Ashley';
+WHERE tags.tag_name = 'Ashley'
+GROUP BY products.product_name;
 ```
 ![alt text](opt_lab_8.png)
 
