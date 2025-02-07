@@ -112,10 +112,7 @@ LIMIT 1;
 
 ```sql
 SELECT 
-    products.product_id AS id, 
-    products.product_name AS product, 
-    SUM(orderdetails.quantity_ordered) AS amount_orders, 
-    MAX(orders.order_date) AS last_order
+    products.product_name AS product
 FROM 
     products
 JOIN orderdetails 
@@ -123,7 +120,7 @@ JOIN orderdetails
 JOIN orders 
     ON orderdetails.order_id = orders.order_id
 GROUP BY 
-    products.product_id, products.product_name
+    products.product_id
 HAVING 
     SUM(orderdetails.quantity_ordered) > 6500
     AND MAX(orders.order_date) <= '2023-09-10' ;
@@ -142,7 +139,7 @@ BEGIN
     RETURN QUERY
     SELECT 
         customers.name AS customer,
-        COALESCE(SUM(orderdetails.quantity_ordered), 0) AS total_ordered
+        SUM(orderdetails.quantity_ordered) AS total_ordered
     FROM products
     JOIN orderdetails
         ON products.product_id = orderdetails.product_id
